@@ -1,15 +1,16 @@
-import Data.Map.Strict (Map, delete, fromList, lookup, member, notMember, size, toList, (!))
-
-numbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']
+import Data.Char (isDigit)
+import Data.List (tails)
+import Data.Maybe (isJust)
 
 fullParse :: String -> Int
 fullParse str = do
-  let f_str = filter (`elem` numbers) str
-  read [head f_str, last f_str] :: Int
+  let f_str = filter isDigit str
+  case length f_str of
+    0 -> 0
+    x -> read [head f_str, last f_str] :: Int
 
 -- Part 2
 
--- Okay so we need to reduce or fold !
 match :: String -> Maybe Int
 match ('z' : 'e' : 'r' : 'o' : xs) = Just 0
 match ('o' : 'n' : 'e' : xs) = Just 1
@@ -43,20 +44,18 @@ match ('t' : 'h' : 'g' : 'i' : 'e' : xs) = Just 8
 match ('e' : 'n' : 'i' : 'n' : xs) = Just 9
 match _ = Nothing
 
--- tried to `match` recursively to input String
-try :: String -> String
-try [] = error "Length too Short !"
-try str = do
-  case match str of
-    Just val -> show val
-    Nothing -> try $ tail str
+parse :: String -> Int
+parse str = do
+  case head $ filter isJust $ map match $ tails str of
+    Nothing -> error "Possibly Bad Input"
+    Just x -> x
 
 -- parses twice once for front digit, once for the last digit (By reversing the string)
 fullParse2 :: String -> Int
 fullParse2 str = do
-  let d1 = try str
-  let d2 = try $ reverse str
-  read (d1 ++ d2) :: Int
+  let d1 = parse str
+  let d2 = parse $ reverse str
+  d1 * 10 + d2
 
 main :: IO ()
 main = do
