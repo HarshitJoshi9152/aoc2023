@@ -7,14 +7,6 @@ wordsWhen p s = case dropWhile p s of
     where
       (w, s'') = break p s'
 
--- countSemiColons :: String -> Int
--- countSemiColons line = length $ filter (== ';') line
-
--- printSemiColons :: [String] -> IO ()
--- printSemiColons lns =
---   let counts = map countSemiColons lns
---    in print counts
-
 -- deriving Read means it can directly read "Red" as Red
 data Cube = Red | Green | Blue deriving (Eq, Show, Read)
 
@@ -44,7 +36,7 @@ parseLine :: String -> Bool
 parseLine line =
   let l = unwords $ drop 2 $ words line
       rawAppearances = wordsWhen (== ';') l
-      -- listOfCubes is a list of all appearances for this line, which itself is a list of (Int, Color) ie [[( int, Color )]]
+      -- appearances is a list of all appearances for this line, which itself is a list of (Int, Color) ie [[( int, Color )]]
       appearances = map parseAppearance rawAppearances
    in areAppearancesValid appearances
 
@@ -59,12 +51,20 @@ isAppearanceValid = all isCubeValid
 areAppearancesValid :: [[(Int, Cube)]] -> Bool
 areAppearancesValid = all isAppearanceValid
 
+p1 :: [String] -> Int
+p1 lns =
+  let validIndex = map parseLine lns
+      c = zip validIndex [1 ..]
+      s = filter fst c
+   in sum $ map snd s
+
 -- PART 2
 
 -- Returns MaxColorValues in order (r, g, b) from the list of all appearances in a line
 maxColorValues :: [[(Int, Cube)]] -> (Int, Int, Int) -- R, G, B
 maxColorValues appearances =
   let flatAppearances = concat appearances
+      -- This probably wastes a lot of CPU cycles
       r = maximum $ map fst $ filter (\(_, x) -> x == Red) flatAppearances
       b = maximum $ map fst $ filter (\(_, x) -> x == Blue) flatAppearances
       g = maximum $ map fst $ filter (\(_, x) -> x == Green) flatAppearances
@@ -74,24 +74,17 @@ parseLine2 :: String -> Int
 parseLine2 line =
   let l = unwords $ drop 2 $ words line
       rawAppearances = wordsWhen (== ';') l
-      -- listOfCubes is a list of all appearances for this line, which itself is a list of (Int, Color) ie [[( int, Color )]]
+      -- appearances is a list of all appearances for this line, which itself is a list of (Int, Color) ie [[( int, Color )]]
       appearances = map parseAppearance rawAppearances
       (r, g, b) = maxColorValues appearances
    in r * g * b
 
--- Limit -> 12 red cubes, 13 green cubes, and 14 blue cubes
+p2 :: [String] -> Int
+p2 lns = sum $ map parseLine2 lns
 
 main :: IO ()
 main = do
   bytes <- readFile "input.txt"
   let lns = lines bytes
-  let validIndex = map parseLine lns
-  let c = zip validIndex [1 .. (length lns)]
-  let s = filter fst c
-  print $ sum $ map snd s
-
-  -- Part 2
-
-  let powers = map parseLine2 lns
-
-  print $ sum powers
+  print ("Part 1 -> " ++ show (p1 lns))
+  print ("Part 2 -> " ++ show (p2 lns))
