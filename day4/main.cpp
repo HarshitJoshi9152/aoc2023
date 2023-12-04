@@ -1,15 +1,9 @@
 #include <iostream>
-#include <ranges>
-#include <iomanip>
 #include <cstdint>
 #include <string>
 #include <unordered_map>
-#include <sstream>
-#include <algorithm>
 #include <fstream>
-#include <array>
 #include <vector>
-#include <utility>
 #include <unordered_set>
 
 using std::cout;
@@ -17,28 +11,11 @@ using std::endl;
 using std::string;
 using std::vector;
 
-// vector<string> split(string str, char del)
-// {
-//   vector<string> tokens = {};
-//   int cursor = 0;
-//   int start = 0;
-//   while ((cursor = str.find(del, start)) != std::string::npos)
-//   {
-//     string token = str.substr(start, cursor);
-//     tokens.emplace_back(token);
-//     start = cursor + 1;
-//   }
-//   // add rest of the strng
-//   tokens.emplace_back(str.substr(start));
-//   return tokens;
-// }
-
 vector<string> split(string str, char del)
 {
-
   vector<string> tokens = {};
   string acc = "";
-  for (int i = 0; i < str.length(); i++)
+  for (uint64_t i = 0; i < str.length(); i++)
   {
     char c = str[i];
     if (c == del)
@@ -56,39 +33,22 @@ vector<string> split(string str, char del)
   return tokens;
 }
 
-// std::vector<std::string> split(const std::string &s, char delim)
-// {
-//   std::vector<std::string> result;
-//   std::stringstream ss(s);
-//   std::string item;
-
-//   while (getline(ss, item, delim))
-//   {
-//     result.push_back(item);
-//   }
-
-//   return result;
-// }
-
 vector<int> parse_cards(vector<string> &cards_str)
 {
   vector<int> nums = {};
-  for (int i = 1; i < cards_str.size(); i++)
+  for (uint64_t i = 1; i < cards_str.size(); i++)
   {
-    // cout << cards_str[i] << endl;
     try
     {
       int n = stoi(cards_str[i]);
       nums.emplace_back(n);
     }
     // coz of bad split
-    catch (std::invalid_argument err)
+    catch (const std::invalid_argument &err)
     {
       continue;
     }
   }
-
-  // cout << ":END:" << endl;
   return nums;
 }
 
@@ -99,19 +59,27 @@ int main(int argc, char const *argv[])
 
   std::string line = "";
 
-  int sum = 0;
+  int p2Sum = 0;
+  int p1Sum = 0;
+  int lineNo = 0;
 
-  // lineNo: Copies
-  // std::unordered_map<int, int> copies = {};
+  std::unordered_map<int, int> copies = {};
+
   while (std::getline(input, line))
   {
-    // Remove till ": "
+    // Adding once for original card
+    if (copies.count(lineNo) == 0)
+    {
+      copies[lineNo] = 1;
+    }
+    else
+    {
+      copies[lineNo] += 1;
+    }
 
+    // processing the line
     line = line.substr(line.find(": "));
-
-    cout << line << endl;
     std::vector<std::string> parts = split(line, '|');
-
     auto winning_cards_str = split(parts[0], ' ');
     auto our_cards_str = split(parts[1], ' ');
 
@@ -119,24 +87,47 @@ int main(int argc, char const *argv[])
     std::unordered_set<int> winning_cards(winning_cards_vec.begin(), winning_cards_vec.end());
     auto our_cards = parse_cards(our_cards_str);
 
+    int matches = 0;
     int gameSum = 0;
-    bool foundOne = false;
     for (auto c : our_cards)
     {
       if (winning_cards.count(c) != 0)
       {
         // found a match
+        matches += 1;
         gameSum *= 2;
         if (gameSum == 0)
           gameSum = 1;
       }
-      // cout << c << endl;
+    }
+    p1Sum += gameSum;
+
+    // Increasing count as per cards won
+
+    int copiesWon = copies[lineNo];
+    for (int i = lineNo + 1; i <= lineNo + matches; i++)
+    {
+      if (copies.count(i) == 0)
+      {
+        copies[i] = copiesWon;
+      }
+      else
+      {
+        copies[i] += copiesWon;
+      }
     }
 
-    sum += gameSum;
+    lineNo += 1;
   }
 
-  cout << sum << endl;
+  // summing all the copies count
+  for (auto lp : copies)
+  {
+    p2Sum += lp.second;
+  }
+
+  cout << p1Sum << endl;
+  cout << p2Sum << endl;
 
   return 0;
 }
